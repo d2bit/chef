@@ -23,15 +23,37 @@
 require "mixlib/shellout"
 require "spec_helper"
 
+def unlocked_shadow_lines
+  [
+    "adam:NP:::::::",
+    "adam:*NP*:::::::",
+    "adam:foobar:::::::",
+    "adam:bahamas10:::::::",
+    "adam:L...:::::::",
+  ]
+end
+
+def locked_shadow_lines
+  [
+    "adam:LK:::::::",
+    "adam:*LK*:::::::",
+    "adam:*LK*foobar:::::::",
+    "adam:*LK*bahamas10:::::::",
+    "adam:*LK*L....:::::::",
+  ]
+end
+
 describe Chef::Provider::User::Solaris do
 
   let(:shellcmdresult) do
     Struct.new(:stdout, :stderr, :exitstatus)
   end
 
+  let(:platform) { "solaris2" }
+
   let(:node) do
     Chef::Node.new.tap do |node|
-      node.automatic["platform"] = "solaris2"
+      node.automatic["platform"] = platform
     end
   end
   let(:events) { Chef::EventDispatch::Dispatcher.new }
@@ -100,34 +122,39 @@ describe Chef::Provider::User::Solaris do
 
   describe "when managing user locked status" do
     describe "when determining if the user is locked" do
-
-      # locked shadow lines
-      [
-        "adam:LK:::::::",
-        "adam:*LK*:::::::",
-        "adam:*LK*foobar:::::::",
-        "adam:*LK*bahamas10:::::::",
-        "adam:*LK*L....:::::::",
-      ].each do |shadow|
+      locked_shadow_lines.each do |shadow|
         it "should return true if user is locked with #{shadow}" do
           shell_return = shellcmdresult.new(shadow + "\n", "", 0)
-          expect(provider).to receive(:shell_out!).with("getent", "shadow", "adam").and_return(shell_return)
+          expect(provider).to receive(:shell_out!).with("grep", "adam", "/etc/shadow").and_return(shell_return)
           expect(provider.check_lock).to eql(true)
         end
       end
 
-      # unlocked shadow lines
-      [
-        "adam:NP:::::::",
-        "adam:*NP*:::::::",
-        "adam:foobar:::::::",
-        "adam:bahamas10:::::::",
-        "adam:L...:::::::",
-      ].each do |shadow|
+      unlocked_shadow_lines.each do |shadow|
         it "should return false if user is unlocked with #{shadow}" do
           shell_return = shellcmdresult.new(shadow + "\n", "", 0)
-          expect(provider).to receive(:shell_out!).with("getent", "shadow", "adam").and_return(shell_return)
+          expect(provider).to receive(:shell_out!).with("grep", "adam", "/etc/shadow").and_return(shell_return)
           expect(provider.check_lock).to eql(false)
+        end
+      end
+
+      context "on omnios" do
+        let(:platform) { "omnios" }
+
+        locked_shadow_lines.each do |shadow|
+          it "should return true if user is locked with #{shadow}" do
+            shell_return = shellcmdresult.new(shadow + "\n", "", 0)
+            expect(provider).to receive(:shell_out!).with("getent", "shadow", "adam").and_return(shell_return)
+            expect(provider.check_lock).to eql(true)
+          end
+        end
+
+        unlocked_shadow_lines.each do |shadow|
+          it "should return false if user is unlocked with #{shadow}" do
+            shell_return = shellcmdresult.new(shadow + "\n", "", 0)
+            expect(provider).to receive(:shell_out!).with("getent", "shadow", "adam").and_return(shell_return)
+            expect(provider.check_lock).to eql(false)
+          end
         end
       end
     end

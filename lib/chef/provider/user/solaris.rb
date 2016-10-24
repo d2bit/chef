@@ -46,7 +46,11 @@ class Chef
         end
 
         def check_lock
-          shadow_line = shell_out!("getent", "shadow", new_resource.username).stdout.strip rescue nil
+          shadow_line = if node["platform"] == "solaris2"
+                          shell_out!("grep", new_resource.username, @password_file)
+                        else
+                          shell_out!("getent", "shadow", new_resource.username)
+                        end.stdout.strip rescue nil
 
           # if the command fails we return nil, this can happen if the user
           # in question doesn't exist
