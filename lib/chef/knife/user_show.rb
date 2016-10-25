@@ -71,6 +71,7 @@ EOF
         else
           output(format_for_display(user))
         end
+        self.class.attrs_to_show = []
       end
 
     end

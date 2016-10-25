@@ -47,8 +47,8 @@ class Chef
 
         user = Chef::User.load(@user_name)
         output(format_for_display(user))
+        self.class.attrs_to_show = []
       end
-
     end
   end
 end

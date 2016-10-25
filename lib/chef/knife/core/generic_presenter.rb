@@ -34,6 +34,10 @@ class Chef
               :long => "--attribute ATTR1 [--attribute ATTR2] ",
               :proc => lambda { |val| @attrs_to_show << val },
               :description => "Show one or more attributes"
+
+            def self.attrs_to_show=(attrs)
+              @attrs_to_show = attrs
+            end
           end
         end
       end

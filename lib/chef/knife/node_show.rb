@@ -57,10 +57,6 @@ class Chef
         output(format_for_display(node))
         self.class.attrs_to_show = []
       end
-
-      def self.attrs_to_show=(attrs)
-        @attrs_to_show = attrs
-      end
     end
   end
 end

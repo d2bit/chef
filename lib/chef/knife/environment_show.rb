@@ -42,6 +42,7 @@ class Chef
 
         env = Chef::Environment.load(env_name)
         output(format_for_display(env))
+        self.class.attrs_to_show = []
       end
     end
   end
